@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import type { ChangeEvent, KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, KeyboardEvent } from 'react';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import '@tensorflow/tfjs';
 
@@ -25,7 +24,7 @@ const IconCamera = () => (
   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
 );
 const IconRobot = () => (
-  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
 );
 const IconSend = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
@@ -52,7 +51,8 @@ function App() {
   const requestRef = useRef<number | null>(null);
 
   // --- API Key ---
-  const API_KEY = "AIzaSyBLsOuHlVUHAB67k1hDL5Z_GZV0Ok1JCi8"; // Paste your key here
+  // IMPORTANT: PASTE YOUR GOOGLE GEMINI KEY HERE
+  const API_KEY = ""; 
 
   // --- Initialization ---
   useEffect(() => {
@@ -140,6 +140,7 @@ function App() {
   useEffect(() => {
     if (isWebcamActive) predictWebcam();
     else if(requestRef.current) cancelAnimationFrame(requestRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWebcamActive]);
 
   const captureWebcam = () => {
@@ -174,7 +175,7 @@ function App() {
     setChatInput('');
     setIsThinking(true);
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     const payload = { contents: [{ role: "user", parts: [{ text: question }, { inlineData: { mimeType: currentImageData.mimeType, data: currentImageData.base64 } }] }] };
 
     try {
@@ -197,10 +198,8 @@ function App() {
   };
 
   return (
-    // Outer container: Full viewport height (h-screen)
     <div className="h-screen w-screen bg-gray-100 flex items-center justify-center p-4 font-sans text-gray-800 overflow-hidden">
       
-      {/* Main Card: 95% width, 90% height */}
       <div className="w-[95%] h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-200">
         
         {/* Left Side: Media & Controls */}
@@ -214,26 +213,38 @@ function App() {
                 <h1 className="text-3xl font-bold text-gray-900 tracking-tight">VisionAI</h1>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-6 flex-shrink-0">
+            {/* NAVIGATION TABS - UPDATED */}
+            <div className="flex bg-slate-200 p-1.5 rounded-2xl mb-6 flex-shrink-0">
                 <button 
                     onClick={() => handleTabSwitch('upload')}
-                    className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${activeTab === 'upload' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    // IF SELECTED: Blue Background, White Text
+                    // IF NOT SELECTED: White Background, Dark Text
+                    className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-200 ${
+                        activeTab === 'upload' 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-white text-slate-700 shadow-sm hover:bg-gray-50'
+                    }`}
                 >
                     Upload Image
                 </button>
+                <div className="w-2"></div> {/* Spacing between buttons */}
                 <button 
                     onClick={() => handleTabSwitch('webcam')}
-                    className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${activeTab === 'webcam' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    // IF SELECTED: Blue Background, White Text
+                    // IF NOT SELECTED: White Background, Dark Text
+                    className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-200 ${
+                        activeTab === 'webcam' 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-white text-slate-700 shadow-sm hover:bg-gray-50'
+                    }`}
                 >
                     Live Webcam
                 </button>
             </div>
 
-            {/* Content Area - Flex Grow to fill remaining height */}
+            {/* Content Area */}
             <div className="flex-grow flex flex-col justify-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 relative overflow-hidden group hover:border-blue-300 transition-colors">
                 
-                {/* Loader */}
                 {loadingModel && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-50">
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
@@ -241,7 +252,6 @@ function App() {
                     </div>
                 )}
 
-                {/* Upload Tab */}
                 {activeTab === 'upload' && !imageSrc && (
                     <label className="flex flex-col items-center justify-center cursor-pointer h-full w-full p-6 hover:bg-blue-50/30 transition-colors">
                         <div className="bg-white p-6 rounded-full shadow-sm mb-4">
@@ -253,7 +263,6 @@ function App() {
                     </label>
                 )}
 
-                {/* Webcam Tab */}
                 {activeTab === 'webcam' && !isWebcamActive && !imageSrc && (
                     <div className="flex flex-col items-center justify-center h-full p-6">
                          <p className="text-gray-500 mb-6 text-lg">Use your camera for real-time AI analysis</p>
@@ -263,12 +272,10 @@ function App() {
                     </div>
                 )}
 
-                {/* Image/Video Display */}
                 <img ref={imageRef} src={imageSrc || '#'} alt="Target" className={`w-full h-full object-contain p-2 ${imageSrc ? 'block' : 'hidden'}`} crossOrigin="anonymous" />
                 <video ref={videoRef} className={`w-full h-full object-cover absolute inset-0 rounded-3xl ${isWebcamActive ? 'block' : 'hidden'}`} playsInline muted />
                 <canvas ref={canvasRef} className="hidden" />
 
-                {/* Webcam Controls */}
                 {isWebcamActive && (
                     <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-6 z-20">
                         <button onClick={captureWebcam} className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-50 transition-colors ring-4 ring-blue-500/20">Capture Photo</button>
@@ -281,7 +288,7 @@ function App() {
         {/* Right Side: Results & Chat */}
         <div className="w-full md:w-1/2 flex flex-col h-full bg-gray-50">
             
-            {/* Predictions Panel - Fixed Height */}
+            {/* Predictions Panel */}
             <div className="p-6 border-b border-gray-200 bg-white flex-shrink-0">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Real-time Analysis</h3>
                 <div className="grid grid-cols-1 gap-3">
@@ -302,11 +309,10 @@ function App() {
                 </div>
             </div>
 
-            {/* Chat Panel - Flex Grow to fill remaining height */}
+            {/* Chat Panel */}
             <div className="flex-grow flex flex-col p-6 overflow-hidden relative">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex-shrink-0">AI Assistant</h3>
                 
-                {/* Chat Log - Scrollable */}
                 <div className="flex-grow overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar">
                     {chatLog.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full opacity-40">
@@ -337,7 +343,6 @@ function App() {
                     <div ref={chatEndRef}></div>
                 </div>
 
-                {/* Input Area - Pinned to bottom */}
                 <div className="relative flex-shrink-0 pt-2">
                     <input 
                         type="text" 
