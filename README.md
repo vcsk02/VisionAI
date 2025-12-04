@@ -1,3 +1,4 @@
+````markdown
 # VisionAI
 
 VisionAI is a modern web client for experimenting with and interfacing to computer vision models. It’s built with Vite and TypeScript, providing a fast, type-safe development experience that’s easy to extend.
@@ -48,7 +49,7 @@ VisionAI is a modern web client for experimenting with and interfacing to comput
 
 Based on the repository layout:
 
-
+```text
 VisionAI/
 ├── public/               # Static assets (favicon, images, etc.)
 ├── src/                  # Source code (components, hooks, utilities)
@@ -59,7 +60,7 @@ VisionAI/
 ├── tsconfig.app.json     # App-specific TypeScript config
 ├── tsconfig.node.json    # Node-specific TypeScript config
 └── ...
-
+````
 
 ---
 
@@ -72,28 +73,28 @@ VisionAI/
 
 Check your versions:
 
-
+```bash
 node -v
 npm -v
-
+```
 
 ### Installation
 
 Clone the repository and install dependencies:
 
-
+```bash
 git clone https://github.com/vcsk02/VisionAI.git
 cd VisionAI
 npm install
-
+```
 
 ### Running in Development
 
 Start the local development server with hot-module replacement:
 
-
+```bash
 npm run dev
-
+```
 
 Then open the URL printed in the terminal (typically `http://localhost:5173`).
 
@@ -101,14 +102,15 @@ Then open the URL printed in the terminal (typically `http://localhost:5173`).
 
 Create an optimized production build:
 
-
+```bash
 npm run build
-
+```
 
 To preview the production build locally (if configured in `package.json`):
 
-
+```bash
 npm run preview
+```
 
 ---
 
@@ -122,9 +124,9 @@ Most configuration lives in three places:
 
 Example environment variable configuration:
 
-
+```bash
 VITE_API_BASE_URL=http://localhost:8000
-
+```
 
 Then inside your code, use `import.meta.env.VITE_API_BASE_URL` to call your backend.
 
@@ -156,18 +158,12 @@ Contributions are welcome! To get started:
 
 2. Create a feature branch:
 
-
+   ```bash
    git checkout -b feature/my-awesome-feature
-
+   ```
 
 3. Commit your changes with clear messages.
 
 4. Push the branch and open a Pull Request.
 
 Please keep PRs focused and small where possible.
-
-```
-
-You can save that as `README.md` at the root of your repo and push it to GitHub.
-::contentReference[oaicite:0]{index=0}
-```
