@@ -58,7 +58,6 @@ VisionAI/
 ├── tsconfig.json         # Base TypeScript config
 ├── tsconfig.app.json     # App-specific TypeScript config
 ├── tsconfig.node.json    # Node-specific TypeScript config
-└── ...
 ````
 
 ---
