@@ -1,4 +1,3 @@
-````markdown
 # VisionAI
 
 VisionAI is a modern web client for experimenting with and interfacing to computer vision models. It’s built with Vite and TypeScript, providing a fast, type-safe development experience that’s easy to extend.
