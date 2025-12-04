@@ -1,54 +1,53 @@
-VisionAI
+# VisionAI
 
 VisionAI is a modern web client for experimenting with and interfacing to computer vision models. It’s built with Vite and TypeScript, providing a fast, type-safe development experience that’s easy to extend.
 
-📖 Table of Contents
+---
 
-Features
+## Table of Contents
 
-Tech Stack
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running in Development](#running-in-development)
+  - [Building for Production](#building-for-production)
+- [Configuration](#configuration)
+- [Available Scripts](#available-scripts)
+- [Development Notes](#development-notes)
+- [Contributing](#contributing)
+- [License](#license)
 
-Project Structure
+---
 
-Getting Started
+## Features
 
-Configuration
+- Model-agnostic UI – Built to plug into different CV/AI backends via HTTP APIs.
+- Image-first workflow – Designed around uploading or selecting images to send to models.
+- Structured results – Layout geared toward showing predictions, bounding boxes, or other model output.
+- Extensible – Add new “model cards” or views by dropping new components into `src/`.
+- Fast dev loop – Vite-powered HMR (hot module replacement) for rapid iteration.
 
-Available Scripts
+---
 
-Development Notes
+## Tech Stack
 
-Contributing
+**Build tool:** Vite  
+**Language:** TypeScript  
 
-License
+**Bundled tooling:**
 
-✨ Features
+- ESLint (`eslint.config.js`)
+- TypeScript configs (`tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`)
 
-Model-agnostic UI – Built to plug into different CV/AI backends via HTTP APIs.
+---
 
-Image-first workflow – Designed around uploading or selecting images to send to models.
-
-Structured results – Layout geared toward showing predictions, bounding boxes, or other model output.
-
-Extensible – Add new “model cards” or views by dropping new components into src/.
-
-Fast dev loop – Vite-powered HMR (hot module replacement) for rapid iteration.
-
-🛠️ Tech Stack
-
-Build tool: Vite
-
-Language: TypeScript
-
-Bundled tooling:
-
-ESLint (eslint.config.js)
-
-TypeScript configs (tsconfig.json, tsconfig.app.json, tsconfig.node.json)
-
-📂 Project Structure
+## Project Structure
 
 Based on the repository layout:
+
 
 VisionAI/
 ├── public/               # Static assets (favicon, images, etc.)
@@ -62,104 +61,113 @@ VisionAI/
 └── ...
 
 
-🚀 Getting Started
+---
 
-Prerequisites
+## Getting Started
 
-Node.js ≥ 18 (recommended)
+### Prerequisites
 
-npm ≥ 9
+* Node.js ≥ 18 (recommended)
+* npm ≥ 9
 
 Check your versions:
+
 
 node -v
 npm -v
 
 
-Installation
+### Installation
 
 Clone the repository and install dependencies:
 
-git clone [https://github.com/vcsk02/VisionAI.git](https://github.com/vcsk02/VisionAI.git)
+
+git clone https://github.com/vcsk02/VisionAI.git
 cd VisionAI
 npm install
 
 
-Running in Development
+### Running in Development
 
 Start the local development server with hot-module replacement:
+
 
 npm run dev
 
 
-Then open the URL printed in the terminal (typically http://localhost:5173).
+Then open the URL printed in the terminal (typically `http://localhost:5173`).
 
-Building for Production
+### Building for Production
 
 Create an optimized production build:
+
 
 npm run build
 
 
-To preview the production build locally (if configured in package.json):
+To preview the production build locally (if configured in `package.json`):
+
 
 npm run preview
 
+---
 
-⚙️ Configuration
+## Configuration
 
 Most configuration lives in three places:
 
-Vite – vite.config.ts: Aliases, dev server configuration, build options, etc.
-
-TypeScript – tsconfig.json, tsconfig.app.json, tsconfig.node.json: Compiler options, path aliases and strictness settings.
-
-Environment variables – Typically via .env files (recommended).
+* **Vite** – `vite.config.ts`: Aliases, dev server configuration, build options, etc.
+* **TypeScript** – `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`: Compiler options, path aliases and strictness settings.
+* **Environment variables** – Typically via `.env` files (recommended).
 
 Example environment variable configuration:
+
 
 VITE_API_BASE_URL=http://localhost:8000
 
 
-Then inside your code, use import.meta.env.VITE_API_BASE_URL to call your backend.
+Then inside your code, use `import.meta.env.VITE_API_BASE_URL` to call your backend.
 
-📜 Available Scripts
+---
 
-npm run dev – Start the development server.
+## Available Scripts
 
-npm run build – Type-check (if configured) and create a production build.
+* `npm run dev` – Start the development server.
+* `npm run build` – Type-check (if configured) and create a production build.
+* `npm run preview` – Preview the production build locally.
+* `npm run lint` – Run ESLint on the codebase (if configured).
 
-npm run preview – Preview the production build locally.
+---
 
-npm run lint – Run ESLint on the codebase (if configured).
+## Development Notes
 
-📝 Development Notes
+* Keep components and hooks inside `src/` small and composable.
+* If you wire this up to multiple vision models, consider a common interface (e.g. `VisionModelClient`) for different backends.
+* Use a central place for API calls (e.g. `src/api/` or `src/services/`).
+* Document any custom model outputs (bounding boxes, masks, captions) so contributors know how to render them.
 
-Keep components and hooks inside src/ small and composable.
+---
 
-If you wire this up to multiple vision models, consider a common interface (e.g., VisionModelClient) for different backends.
-
-Use a central place for API calls (e.g., src/api/ or src/services/).
-
-Document any custom model outputs (bounding boxes, masks, captions) so contributors know how to render them.
-
-🤝 Contributing
+## Contributing
 
 Contributions are welcome! To get started:
 
-Fork the repository.
+1. Fork the repository.
 
-Create a feature branch:
-
-git checkout -b feature/my-awesome-feature
+2. Create a feature branch:
 
 
-Commit your changes with clear messages.
+   git checkout -b feature/my-awesome-feature
 
-Push the branch and open a Pull Request.
+
+3. Commit your changes with clear messages.
+
+4. Push the branch and open a Pull Request.
 
 Please keep PRs focused and small where possible.
 
-📄 License
+```
 
-[Add License Information Here] (e.g. MIT, Apache-2.0, etc.)
+You can save that as `README.md` at the root of your repo and push it to GitHub.
+::contentReference[oaicite:0]{index=0}
+```
