@@ -169,3 +169,7 @@ Contributions are welcome! To get started:
 4. Push the branch and open a Pull Request.
 
 Please keep PRs focused and small where possible.
+
+## Methodology
+
+We follow the CRISP-DM process for this project (see [docs/CRISP_DM.md](docs/CRISP_DM.md)).
