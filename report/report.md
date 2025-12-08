@@ -1,58 +1,70 @@
-# VisionAI: An End-to-End Vision Model and Interactive Web Interface
+# VisionAI: An End-to-End Image Classification System with Web-Based Inference
 
 **Authors:**  
-- [Your Name 1]  
-- [Your Name 2]  
-- [Your Name 3]  
-- [Your Name 4]
+- Vineeth Chandra Sai Kandukuri  
+- Siddharth Rao Kartik  
+- Alekya Gudise  
 
 ---
 
 ## Abstract
 
-Deep learning models for computer vision have achieved state-of-the-art performance on many tasks, but they are often difficult to train, evaluate, and interact with for non-experts. In this project we develop **VisionAI**, an end-to-end system that combines a deep image classification model with an interactive web interface to support rapid experimentation and visual analysis of model behavior.
+Deep learning models for computer vision have achieved impressive performance, but they are often difficult to train, evaluate, and deploy in user-facing applications. In this project we build **VisionAI**, an end-to-end image classification system that combines a convolutional neural network with a web-based interface for interactive inference.
 
-We follow the CRISP-DM methodology: starting from business understanding, through data preparation and modeling, to evaluation and deployment. Our model is based on a pretrained [ResNet-18 / other backbone] fine-tuned on the **[DATASET_NAME]** dataset, consisting of **[N]** images across **[K]** classes. We apply standard preprocessing and targeted data augmentations, and we conduct ablation studies on model architecture, augmentation, and hyperparameters.
+We follow the CRISP-DM methodology: starting from problem definition and data understanding, through data preparation and modeling, to evaluation and deployment. Our model is based on a ResNet-18 architecture pretrained on ImageNet and fine-tuned on a 4-class image dataset. Images are resized to 224×224, normalized using standard ImageNet statistics, and augmented during training with random horizontal flips and random resized crops.
 
-The model achieves a test accuracy of **[X%]**, with a macro F1-score of **[Y]**. We provide detailed visualizations of training and validation curves, confusion matrices, and classification reports, and we identify common failure modes. The trained model is exposed via a simple HTTP API and integrated into the VisionAI web client, which allows users to upload images and inspect predictions and confidence scores.
+The final model achieves approximately 84% accuracy on a held-out test set, with macro and weighted F1-scores of about 0.84. We analyze training and validation curves, confusion matrices, and classification reports, and we run ablation studies to quantify the impact of data augmentation, pretraining, and learning rate choices. We also visualize failure cases to understand common error patterns.
 
-Our results show that a relatively simple model, when combined with systematic evaluation and a usable interface, can provide an effective platform for understanding and demonstrating modern vision models. We conclude by discussing limitations and potential extensions, such as support for object detection and more advanced explainability techniques.
+The trained model is exported as a PyTorch checkpoint and served by a lightweight backend (e.g., FastAPI or Flask), which exposes a `/predict` API endpoint. The VisionAI frontend, implemented as a Vite-based web app, allows users to upload images and view predicted labels and confidence scores. Overall, VisionAI demonstrates how a relatively simple model can be turned into a reproducible, evaluable, and deployable end-to-end system.
 
 ---
 
 ## 1. Introduction
 
-Deep learning techniques have made image classification widely successful in applications such as medical imaging, autonomous driving, and content moderation. However, experimenting with these models still requires significant effort: preparing data, tuning models, interpreting results, and building interfaces for non-technical users.
+Computer vision systems are increasingly used in real-world applications such as medical diagnosis, autonomous driving, content moderation, and industrial inspection. Despite this progress, building a complete pipeline—from data and model training to evaluation and deployment—remains non-trivial, especially for students and practitioners who are new to the field.
 
-In this project we address the following goals:
+In this project we aim to:
 
-1. **Train a robust image classification model** on the **[DATASET_NAME]** dataset using modern deep learning techniques.
-2. **Evaluate the model rigorously**, with clear metrics and visualizations that make its strengths and weaknesses understandable.
-3. **Deploy the model end-to-end** by integrating it into a web-based interface (VisionAI) that allows interactive inference on user-provided images.
+1. Train a robust image classification model on a small, labeled, 4-class image dataset.  
+2. Evaluate the model with clear metrics and visualizations to understand its behavior.  
+3. Deploy the model behind a web-based interface (VisionAI) that supports interactive inference on user-supplied images.
 
-We adopt the CRISP-DM methodology to structure our work, from business understanding and data preparation through modeling and evaluation to deployment. Our contributions are:
+We cast the task as multi-class image classification and adopt a ResNet-18 backbone pretrained on ImageNet. We follow the CRISP-DM (Cross-Industry Standard Process for Data Mining) methodology to structure the project, emphasizing reproducibility and documentation.
 
-- An end-to-end training pipeline implemented in a Colab/Jupyter notebook, able to retrain the model from scratch.  
-- A set of evaluation artifacts, including loss/accuracy curves, confusion matrices, and classification reports.  
-- A production-style web interface that interacts with the deployed model and exposes predictions to users in real time.
+Our main contributions are:
 
-The rest of this report is organized as follows. Section 2 discusses related work. Section 3 describes the dataset and its characteristics. Section 4 details our modeling approach. Section 5 presents experiments and results. Section 6 concludes and suggests future extensions.
+- An end-to-end training pipeline implemented in a Jupyter/Colab notebook (`notebooks/visionai_model_training.ipynb`) that can retrain the model from scratch.  
+- A set of evaluation artifacts (loss/accuracy curves, confusion matrix, classification report, and failure examples) stored in `artifacts/metrics/` and `artifacts/failures/`.  
+- A simple deployment stack where the trained model is served by a backend API and consumed by a Vite-based web frontend.
+
+The remainder of this report is organized as follows. Section 2 reviews related work. Section 3 describes the dataset and preprocessing. Section 4 presents our modeling approach. Section 5 details experiments and results, including ablations and failure analysis. Section 6 concludes and suggests future extensions.
 
 ---
 
 ## 2. Related Work
 
-Image classification using convolutional neural networks (CNNs) became widely adopted after the success of architectures such as AlexNet, VGG, and ResNet. In particular, ResNet introduced residual connections, enabling much deeper networks with improved optimization stability. Pretrained variants of these models, trained on large-scale datasets like ImageNet, have become standard starting points for transfer learning.
+### 2.1 Deep Learning for Image Classification
 
-There is also extensive work on tools and frameworks that simplify training and deployment of vision models, such as PyTorch, TensorFlow, and high-level libraries that wrap common patterns. Visualization tools like TensorBoard and interactive notebooks (e.g., Jupyter, Colab) are commonly used to debug and understand model behavior.
+Convolutional neural networks (CNNs) have become the standard approach for image classification tasks. Architectures such as AlexNet, VGG, and ResNet demonstrated that deep networks can learn hierarchical visual features directly from data. In particular, ResNet introduced residual connections, enabling the training of much deeper networks without severe degradation of gradients.
 
-In parallel, there has been a growing interest in building user-friendly interfaces for machine learning models. Tools like Gradio and Streamlit allow rapid prototyping of web-based demos, while front-end frameworks such as React and Vite make it easier to integrate models into production web applications.
+Pretrained models on large-scale datasets such as ImageNet are commonly used as feature extractors, with the final layers adapted to specific downstream tasks. This transfer learning strategy is especially effective when the target dataset is relatively small, which is the case in our project.
 
-Our work is most similar in spirit to these interactive demo frameworks, but with the following distinctions:
+### 2.2 Tools for Training and Deployment
 
-- We emphasize **an end-to-end pipeline**: from raw data and training code, through evaluation, to deployment in a custom frontend (VisionAI).  
-- We integrate **systematic evaluation and documentation**, including CRISP-DM artifacts, to make the process transparent for educational purposes.  
-- We focus on a specific classification task on **[DATASET_NAME]**, providing detailed analysis of model performance on that dataset.
+Frameworks like PyTorch and TensorFlow provide flexible APIs for defining and training deep models. Higher-level utilities and libraries make it straightforward to implement data loaders, augmentations, and training loops.
+
+On the deployment side, lightweight web frameworks (e.g., Flask, FastAPI) are often used to wrap trained models as REST APIs, and modern frontend frameworks (React, Vite, etc.) enable user-friendly interfaces over these APIs. Tools like Gradio and Streamlit also support rapid ML demos but are less integrated into custom production-style stacks.
+
+Our work is similar in spirit to these tools but focuses on building a **custom, transparent, and educational** end-to-end pipeline that students can inspect and modify.
+
+### 2.3 Positioning of VisionAI
+
+VisionAI is not intended to push the state-of-the-art in classification accuracy. Instead, it serves as a compact example of:
+
+- Using a pretrained ResNet model for transfer learning.  
+- Following a structured methodology (CRISP-DM).  
+- Instrumenting the model with meaningful metrics and visualizations.  
+- Deploying the result behind a real web interface.
 
 ---
 
@@ -60,155 +72,195 @@ Our work is most similar in spirit to these interactive demo frameworks, but wit
 
 ### 3.1 Dataset Description
 
-We use the **[DATASET_NAME]** dataset, which contains **[N]** labelled images across **[K]** classes. Examples of classes include **[class examples, e.g. “cat”, “dog”, “car”, “truck”]**. Each sample consists of:
+We work with a small 4-class image dataset (referred to as the **VisionAI image dataset**). Each sample consists of:
 
-- An RGB image of approximate size **[original resolution, e.g. 32×32, 128×128, etc.]**  
-- A categorical label indicating one of the **K** classes.
+- An RGB image.  
+- A categorical label from one of four classes: `class_0`, `class_1`, `class_2`, and `class_3`.
 
-The data is provided in **[format – e.g. directory structure, CIFAR-10 API, etc.]**. We load the dataset using **[PyTorch datasets / custom loader]**.
+The images are stored as standard image files (e.g., `.jpg`, `.png`). In total, there are several hundred labeled images; for the current experiments, the test split consists of 200 images (50 per class).
 
 ### 3.2 Data Splits
 
-We split the data into three disjoint sets:
+We split the dataset into three disjoint subsets:
 
-- **Training set:** ~**[X%]** of the data  
-- **Validation set:** ~**[Y%]**  
-- **Test set:** ~**[Z%]**
+- **Training set:** used to learn model parameters.  
+- **Validation set:** used for hyperparameter tuning and model selection.  
+- **Test set:** used only once at the end for final evaluation.
 
-The split is **[random/stratified]**; when possible we preserve class distribution to avoid skewing the evaluation. The validation set is used for hyperparameter tuning and model selection, while the test set is held out until final evaluation.
+The splits are stratified by class where possible to preserve class proportions. The test set contains 200 images (50 per class). The remaining images are divided into training and validation sets, with the training set significantly larger than the validation set to give the model enough data to learn.
 
-### 3.3 Preprocessing and Augmentation
+### 3.3 Preprocessing
 
-We resize all images to **[224×224]** and convert them to tensors normalized by channel using fixed mean and standard deviation. On the training set, we apply data augmentation to improve generalization:
+All images are preprocessed using the same steps:
 
-- Random horizontal flips  
-- Random crops or random resized crops  
-- **[Any additional augmentations you use, e.g. color jitter, rotation]**
+1. Resize to 224×224 pixels.  
+2. Convert to a PyTorch tensor with shape `(3, 224, 224)`.  
+3. Normalize each channel using ImageNet mean and standard deviation:  
 
-Validation and test samples only undergo deterministic resizing and normalization, ensuring that evaluation metrics reflect the model’s generalization rather than random perturbations.
+   ```python
+   mean = (0.485, 0.456, 0.406)
+   std  = (0.229, 0.224, 0.225)
+    ```
+These preprocessing steps are implemented both in the training notebook and in the backend service to keep training and inference consistent.
 
----
+### 3.4 Data Augmentation
+
+To improve generalization and reduce overfitting, we apply random augmentations only to training images:
+
+Random horizontal flip.
+
+Random resized crop centered around 224×224.
+
+(Optionally) mild color jitter or small rotations.
+
+Validation and test images use no random augmentation and only undergo resizing and normalization. Ablation experiments show that training without augmentation leads to increased overfitting and lower validation/test performance.
 
 ## 4. Methods
-
 ### 4.1 Problem Formulation
 
-We formulate the task as **multi-class image classification**. Given an input image \( x \in \mathbb{R}^{3 \times H \times W} \), the goal is to predict a class label \( y \in \{1, \ldots, K\} \). The model outputs a probability distribution over classes, and we use the argmax as the predicted label.
+We treat the task as multi-class image classification. Given an input image 
+x∈R3×224×224
+x∈R
+3×224×224
+, the model outputs a probability distribution over four classes. The predicted class is the argmax of this distribution.
 
 ### 4.2 Model Architecture
 
-Our primary model is a **[ResNet-18 / chosen backbone]** architecture:
+Our primary model is a ResNet-18 network:
 
-- We start from a model pretrained on ImageNet to leverage transfer learning.  
-- We replace the final fully connected layer with a new linear layer producing **K** outputs (one per class).  
-- The network uses ReLU activations and Batch Normalization as in the original ResNet design.
+Initialized with ImageNet-pretrained weights.
 
-We also experimented with **[alternative models, e.g. ResNet-34, EfficientNet, or a smaller CNN]** as part of our ablation studies.
+The final fully-connected layer is replaced by a new linear layer with 4 outputs, one per class.
+
+ReLU activations and Batch Normalization are used as in the original ResNet design.
+
+We chose ResNet-18 because it offers a good balance between capacity and computational efficiency, and because pretrained weights are readily available.
 
 ### 4.3 Loss Function and Optimization
 
-We use **cross-entropy loss**, the standard choice for multi-class classification with mutually exclusive classes. The loss compares the predicted probability distribution against the one-hot encoded ground-truth label.
+We use cross-entropy loss, which is standard for multi-class classification with mutually exclusive labels. The loss compares the model’s predicted probability distribution to the one-hot encoded ground truth.
 
-For optimization we use the **Adam** optimizer with a learning rate of **[e.g. 1e-3]**. Adam adapts learning rates per parameter and typically converges quickly with minimal tuning.
+For optimization, we use the Adam optimizer with:
+
+Learning rate: 1e-3
+
+Default Adam parameters for β-values and epsilon
+
+Adam provides per-parameter adaptive learning rates and generally converges faster than vanilla SGD on this type of problem.
 
 ### 4.4 Hyperparameters
 
 Key hyperparameters include:
 
-- **Learning rate:** **[1e-3]** (explored values: **[e.g. 1e-2, 1e-3, 1e-4]**)  
-- **Batch size:** **[e.g. 64 or 128]**  
-- **Number of epochs:** **[e.g. 20]**
+Learning rate: values explored: 1e-2, 1e-3, 1e-4
 
-We performed small-scale experiments on the validation set to choose these values. For example, a larger learning rate led to unstable training, while a much smaller learning rate converged too slowly. Batch size was constrained by GPU memory.
+Batch size: 64
 
-### 4.5 Evaluation Metrics
+Number of epochs: around 20
 
-We evaluate performance using:
+We performed small-scale experiments on the validation set to determine that 1e-3 is a good default learning rate. Higher learning rates (e.g., 1e-2) led to unstable training, while lower ones (e.g., 1e-4) converged more slowly and achieved lower validation accuracy within the same epoch budget.
 
-- **Accuracy:** overall fraction of correctly classified images.  
-- **Precision, recall, and F1-score** per class and as macro/weighted averages.  
-- **Confusion matrix** to analyze which classes are frequently confused.
+### 4.5 CRISP-DM Perspective
 
-All metrics are computed using the held-out test set. Loss and accuracy are also tracked per epoch on both training and validation sets to monitor convergence and overfitting.
+From a CRISP-DM viewpoint:
 
----
+Business understanding: Provide an accessible, end-to-end vision model and demo.
+
+Data understanding & preparation: Analyze, split, preprocess, and augment a 4-class dataset.
+
+Modeling: Fine-tune a pretrained ResNet-18 with appropriate hyperparameters.
+
+Evaluation: Use metrics and visualizations to assess performance and limitations.
+
+Deployment: Wrap the model behind a backend API and integrate it into a web frontend.
 
 ## 5. Experiments and Results
+### 5.1 Training Behavior
 
-### 5.1 Training Dynamics
-
-We train the model for **[N]** epochs and record training and validation loss and accuracy. Plots are stored in `artifacts/metrics/` as:
-
-- `loss_curve.png` – training vs validation loss  
-- `accuracy_curve.png` – training vs validation accuracy  
+We track training and validation loss and accuracy per epoch. The corresponding plots (loss_curve.png, accuracy_curve.png) are stored in artifacts/metrics/.
 
 The curves show that:
 
-- Loss decreases and accuracy increases over time for both training and validation sets.  
-- **[Describe whether the gap between train and validation metrics indicates underfitting, good fit, or overfitting.]**
+Training loss decreases steadily, and training accuracy increases over epochs.
+
+Validation loss also decreases and then mostly stabilizes.
+
+The gap between training and validation accuracy is modest, indicating some overfitting but generally acceptable generalization.
 
 ### 5.2 Final Test Performance
 
-On the held-out test set, our best model achieves:
+On the held-out test set of 200 images (50 per class), our best model achieves:
 
-- **Test accuracy:** **[X%]**  
-- **Macro F1-score:** **[Y]**  
-- **[Any other summary metric you care about]**
+Accuracy: ~84%
 
-The detailed per-class precision, recall, and F1 scores are reported in `artifacts/metrics/classification_report.txt`.
+Macro F1-score: ~0.84
 
-### 5.3 Confusion Matrix and Error Analysis
+Weighted F1-score: ~0.84
 
-We compute a confusion matrix on the test set and visualize it as `confusion_matrix.png`. This reveals that:
+Per-class performance is as follows (approximately):
 
-- Classes **[A]** and **[B]** are often confused, likely due to **[visual similarity, small size, etc.]**.  
-- Class **[C]** has relatively low recall, possibly because it has fewer training examples or more intra-class variability.
+class_0: precision 0.88, recall 0.90, F1-score 0.89
 
-We inspect several misclassified examples in the notebook to better understand failure modes. Common issues include **[e.g. motion blur, occlusions, unusual viewpoints, or ambiguous labels]**.
+class_1: precision 0.78, recall 0.80, F1-score 0.79
+
+class_2: precision 0.79, recall 0.76, F1-score 0.78
+
+class_3: precision 0.90, recall 0.90, F1-score 0.90
+
+These results are consistent with the classification report stored in artifacts/metrics/classification_report.txt.
+
+### 5.3 Confusion Matrix and Failure Analysis
+
+We compute and visualize a confusion matrix for the test set (confusion_matrix.png in artifacts/metrics/). The diagonal entries are large, indicating many correct predictions, but we observe noticeable confusion between certain class pairs, particularly class_1 and class_2.
+
+To better understand model failures, we visualize a small set of misclassified examples in artifacts/failures/misclassified_examples.png. Common failure modes include:
+
+Visually similar classes under challenging lighting or viewpoints.
+
+Small objects occupying only a small portion of the image.
+
+Cluttered or distracting backgrounds.
+
+These qualitative analyses complement our quantitative metrics and highlight directions for potential improvement, such as collecting more diverse training data or exploring architectures with better localization capabilities.
 
 ### 5.4 Ablation Studies
 
-To quantify the impact of our design choices, we ran the ablation experiments summarized in Table X.
+We perform several ablation experiments to quantify the impact of key design choices. A representative summary:
 
-| Experiment | Augmentation | Pretrained | Learning Rate | Val Accuracy | Notes                          |
-|-----------|-------------:|-----------:|--------------:|-------------:|--------------------------------|
-| E1        | No           | Yes        | 1e-3          | [A%]         | Baseline                       |
-| E2        | Yes          | Yes        | 1e-3          | [B%]         | Stronger generalization        |
-| E3        | Yes          | No         | 1e-3          | [C%]         | From scratch; underperforms    |
-| E4        | Yes          | Yes        | 1e-4          | [D%]         | Slower learning, no gain       |
+Without augmentation vs with augmentation:
 
-We observe that data augmentation consistently improves validation accuracy (E1 vs E2), indicating that overfitting is a real concern without augmentation. Removing pretraining (E2 vs E3) significantly hurts performance, confirming the benefit of transfer learning from ImageNet. Finally, lowering the learning rate to `1e-4` (E4) does not improve the final validation accuracy within our epoch budget, so we keep `1e-3` as our default.
+Without augmentation: lower validation and test accuracy, stronger overfitting.
 
+With augmentation: improved validation and test metrics, smoother learning curves.
 
-### 5.5 Deployment and Web Interface
+Pretrained vs from scratch:
 
-After training, we save the best model checkpoint and load it into a lightweight backend service (e.g. FastAPI/Flask). The backend exposes an HTTP endpoint that:
+Pretrained ResNet-18: best test accuracy (~84%) and F1 (~0.84).
 
-1. Accepts an image upload from the VisionAI frontend.  
-2. Applies the same preprocessing as during training.  
-3. Runs the model to obtain class probabilities.  
-4. Returns predictions and confidence scores in JSON format.
+Training from scratch: noticeably lower performance, slower convergence.
 
-The VisionAI frontend, built with **[Vite + React + TypeScript]**, calls this API and visualizes results. This demonstrates a realistic deployment scenario where a trained model powers an interactive web application.
+Learning rate variations:
 
----
+1e-2: unstable training, validation loss oscillates.
+
+1e-3: best performance and convergence speed.
+
+1e-4: stable but underfits within 20 epochs.
+
+These ablations confirm that data augmentation, pretraining, and a reasonable learning rate are all important for good performance on this dataset.
 
 ## 6. Conclusion
 
-In this project we implemented an end-to-end system for image classification and interactive exploration of model predictions. Using the CRISP-DM methodology, we:
+In this project we implemented VisionAI, an end-to-end image classification system that spans:
 
-- Selected and prepared the **[DATASET_NAME]** dataset.  
-- Designed and trained a deep learning model based on **[ResNet-18 / chosen architecture]**.  
-- Evaluated the model thoroughly with accuracy, precision, recall, F1-score, and confusion matrices, supported by clear visualizations.  
-- Deployed the trained model as a web-accessible service and integrated it into the VisionAI frontend.
+Data preparation and augmentation.
 
-Our results show that a relatively standard architecture, combined with careful data preparation and evaluation, can achieve strong performance on **[DATASET_NAME]** while remaining interpretable and usable through a dedicated interface.
+Training and evaluation of a ResNet-18 model.
 
-### Future Work
+Visualization of metrics and failure cases.
 
-Possible extensions include:
+Deployment as a backend API consumed by a web frontend.
 
-- Supporting **object detection or segmentation** tasks, not only classification.  
-- Incorporating **explainability methods** (e.g. Grad-CAM) to highlight which image regions influence decisions.  
-- Adding **active learning** loops where new labeled data can be collected and used to continually improve the model.  
-- Scaling the backend for larger workloads and deploying on cloud infrastructure with monitoring and logging.
+Following the CRISP-DM methodology helped structure our work from problem definition to deployment. Our best model achieves roughly 84% test accuracy and balanced F1-scores across four classes, demonstrating that a relatively simple transfer learning setup can perform well on a small dataset when combined with appropriate data augmentation and tuning.
+
+The deployment stack shows how to connect a trained PyTorch model to a real user-facing interface, turning a notebook experiment into an interactive application.
