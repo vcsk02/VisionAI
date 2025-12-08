@@ -1,130 +1,188 @@
-# VisionAI – Model Evaluation
+# VisionAI – Evaluation
 
-This document explains how we evaluate the VisionAI model, how the dataset is split, what metrics we use, and how to interpret the plots in `artifacts/metrics/`.
+This document explains how we evaluate the VisionAI model and how to interpret the figures in `artifacts/metrics/`.
 
 ---
 
 ## 1. Dataset Splits
 
-We partition our dataset into three disjoint sets:
+We split the dataset into three parts:
 
-- **Train:** ~[X%] of the data  
-- **Validation:** ~[Y%]  
-- **Test:** ~[Z%]
+- **Train:** used to fit model parameters  
+- **Validation:** used for hyperparameter tuning and model selection  
+- **Test:** used only once, for final reporting
 
-The **training set** is used to fit model parameters.  
-The **validation set** is used for model selection and hyperparameter tuning.  
-The **test set** is held out until the end and used only for final reporting.
+In our experiments we use approximately:
 
-Splits are [stratified / random], ensuring that each class is reasonably represented in all splits.
+- Train: 75%  
+- Validation: 8%  
+- Test: 17%  
+
+The validation set is never used to update model weights; it is only used to pick hyperparameters and the best checkpoint. The test set remains untouched until the end to provide an unbiased estimate of performance.
 
 ---
 
 ## 2. Data Augmentation
 
-To improve generalization and reduce overfitting, we apply the following augmentations on the training set only:
+To improve generalization and reduce overfitting, we apply data augmentation **only to the training set**. Typical augmentations include:
 
-- **Random horizontal flip:** Helps the model handle mirrored images.
-- **Random crop / resized crop:** Adds robustness to small translations and zoom.
-- **[Any others you use: color jitter, rotation, etc.]**
+- `RandomHorizontalFlip` – makes the model robust to left–right flips  
+- `RandomResizedCrop` / `RandomCrop` – simulates small translations and zoom  
+- (Optional) `ColorJitter`, mild `RandomRotation`, etc.
 
-The validation and test sets receive **no augmentation**, only deterministic preprocessing (resize, normalization), so metrics truly reflect generalization.
+The **validation** and **test** sets use only deterministic preprocessing:
+
+1. Resize to the target resolution (e.g. 224×224)  
+2. Convert to tensor  
+3. Normalize by channel mean and standard deviation  
+
+This ensures the reported metrics reflect true generalization, not randomness from augmentation.
 
 ---
 
 ## 3. Core Metrics
 
-We use the following metrics to evaluate the model:
+We evaluate the model on the held-out test set using the following metrics.
 
-- **Accuracy:**  
-  Fraction of correctly classified examples. Easy to interpret and a good overall indicator when classes are relatively balanced.
+### 3.1 Accuracy
 
-- **Precision, Recall, F1-score (per class):**  
-  Useful when classes are imbalanced or when some error types are more costly than others.  
-  - Precision: of all predicted positives, how many are correct?  
-  - Recall: of all true positives, how many did we find?  
-  - F1: harmonic mean of precision and recall.
+Overall accuracy is:
 
-- **Confusion matrix:**  
-  Shows which classes are being confused with others and highlights systematic errors.
+\[
+\text{Accuracy} = \frac{\text{# correct predictions}}{\text{total # samples}}
+\]
 
-For some settings we also consider **[mAP / IoU / ROC-AUC]** if relevant to the task.
+This is an intuitive, single-number summary of performance, especially when classes are reasonably balanced.
 
----
+### 3.2 Precision, Recall, and F1-score
 
-## 4. Plots and What They Show
+For each class \( c \):
 
-All figures are stored in `artifacts/metrics/`.
+- **True Positives (TP\_c)** – predicted as \( c \) and actually \( c \)  
+- **False Positives (FP\_c)** – predicted as \( c \) but actually not \( c \)  
+- **False Negatives (FN\_c)** – actually \( c \) but predicted as something else  
 
-### 4.1 Training vs Validation Loss (`loss_curve.png`)
+We compute:
 
-- **Goal:** Check for overfitting and convergence.
-- **Healthy behavior:**
-  - Training and validation loss both decrease and then stabilize.
-- **Warning signs:**
-  - Training loss keeps dropping while validation loss increases → overfitting.
-  - Loss fluctuates heavily → learning rate might be too high or batch size too small.
+\[
+\text{Precision}(c) = \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c}
+\]
 
-### 4.2 Training vs Validation Accuracy (`accuracy_curve.png`)
+\[
+\text{Recall}(c) = \frac{\text{TP}_c}{\text{TP}_c + \text{FN}_c}
+\]
 
-- **Goal:** Track how predictive performance evolves.
-- **Healthy behavior:**
-  - Both curves increase and plateau.
-  - Validation accuracy is close to training accuracy.
-- **Warning signs:**
-  - Big gap between train and val accuracy → overfitting.
-  - Both curves low → model underfits or architecture is too weak.
+\[
+\text{F1}(c) = 2 \cdot \frac{\text{Precision}(c) \cdot \text{Recall}(c)}{\text{Precision}(c) + \text{Recall}(c)}
+\]
 
-### 4.3 Confusion Matrix (`confusion_matrix.png`)
+We use `sklearn.metrics.classification_report` to compute per-class precision/recall/F1 plus macro and weighted averages.
 
-- **Goal:** Understand which classes are confused.
-- The diagonal cells represent correct predictions; off-diagonal cells are misclassifications.
-- Patterns we observe:
-  - **[Example: “Class A and B are often confused, likely because they look visually similar.”]**
-  - **[Example: “Class C has very low recall, probably due to few training examples.”]**
+### 3.3 Confusion Matrix
 
-### 4.4 Classification Report (`classification_report.txt`)
+We also compute a confusion matrix \( C \) where:
 
-- Contains precision, recall, F1-score, and support for each class.
-- Used to:
-  - Identify minority classes with poor performance.
-  - Compare different model variants during ablation studies.
+- Rows = true classes  
+- Columns = predicted classes  
+- \( C[i, j] \) = number of samples of class \( i \) predicted as class \( j \)
 
-### 4.5 Optional ROC / PR Curves (`roc_curve.png`, etc.)
+This reveals which classes are systematically confused and complements the scalar metrics above.
 
-- **ROC curve:** Shows trade-off between true positive rate and false positive rate.
-- **PR curve:** More informative than ROC under heavy class imbalance.
-- Area under the curve (AUC) summarizes overall ranking quality.
+### 3.4 Optional Metrics
+
+For some tasks we may also consider:
+
+- **ROC curve / AUC** – for binary or one-vs-rest setups  
+- **Task-specific metrics** such as mAP or IoU (for detection/segmentation)
+
+These are only used when relevant to the dataset and architecture.
 
 ---
 
-## 5. Interpretation & Key Findings
+## 4. Plots and Files in `artifacts/metrics/`
 
-From the metrics and plots we conclude:
+All visualizations and reports are stored under `artifacts/metrics/`.
 
-- The best model configuration is **[model + hyperparams]**, achieving:
-  - Test accuracy: **[X%]**
-  - Macro F1-score: **[Y]**  
-- Data augmentation **[e.g., improved validation accuracy by Z% and reduced overfitting]**.
-- Main failure modes:
-  - **[Examples: misclassification under heavy occlusion / tiny objects / similar-looking classes.]**
+### 4.1 `loss_curve.png` – Training vs Validation Loss
 
-These insights guide future improvements, such as collecting more data for difficult classes, trying more powerful architectures, or tuning augmentation strategies.
+Shows how loss evolves over epochs:
 
-## 6. Ablation Studies and Failure Analysis
+- A **healthy** model typically has both training and validation loss decreasing and then roughly flattening.  
+- If training loss keeps dropping while validation loss rises, the model is overfitting.
 
-We ran a set of ablation experiments to understand the effect of key design choices:
+### 4.2 `accuracy_curve.png` – Training vs Validation Accuracy
 
-- **Data augmentation:** Removing augmentation decreases validation accuracy and increases overfitting.
-- **Pretraining:** Training from ImageNet-pretrained weights performs significantly better than training from scratch on our dataset.
-- **Learning rate:** A learning rate of `1e-3` balances convergence speed and stability; much higher or lower values degraded performance.
+Shows accuracy over epochs:
 
-These results are summarized in Section 5.4 of the report and in the ablation table inside the training notebook.
+- Ideally, training and validation accuracy both increase and then plateau.  
+- A large gap between training and validation accuracy suggests overfitting.  
+- Both curves staying low suggests underfitting or an overly simple model.
 
-We also perform **failure analysis** by visualizing a subset of misclassified test images. These examples (stored in `artifacts/failures/misclassified_examples.png`) highlight common failure modes such as:
+### 4.3 `confusion_matrix.png` – Confusion Matrix
 
-- Confusion between visually similar classes.
-- Poor performance on small or heavily occluded objects.
-- Weaknesses on under-represented classes.
+Visualizes test-time confusions:
 
-Together, the ablation experiments and failure analysis provide a more complete picture of where the model succeeds and where it struggles, guiding future improvements.
+- The diagonal cells represent correct predictions.  
+- Off-diagonal cells show which classes are mislabeled as which.
+
+This is the main tool for spotting systematically hard classes.
+
+### 4.4 `classification_report.txt` – Precision/Recall/F1
+
+Contains the full text classification report from scikit-learn:
+
+- Per-class precision, recall, F1-score, and support  
+- Macro / weighted averages  
+- Overall accuracy
+
+We use this to compare variants in ablation studies and to describe results in the written report.
+
+### 4.5 (Optional) `roc_curve.png` – ROC Curve
+
+If we evaluate a binary (or one-vs-rest) setup, this file shows:
+
+- True Positive Rate vs False Positive Rate at different thresholds  
+- Area under the curve (AUC) as a scalar summary
+
+---
+
+## 5. Example Results (Current Best Model)
+
+For our current best model on the test set (200 images, 4 classes with 50 samples each), we obtain the following classification report:
+
+- **Accuracy:** 0.84 (84%)  
+- **Macro F1-score:** 0.84  
+- **Weighted F1-score:** 0.84  
+
+Per-class performance:
+
+- `class_0`: precision 0.88, recall 0.90, F1-score 0.89 (50 samples)  
+- `class_1`: precision 0.78, recall 0.80, F1-score 0.79 (50 samples)  
+- `class_2`: precision 0.79, recall 0.76, F1-score 0.78 (50 samples)  
+- `class_3`: precision 0.90, recall 0.90, F1-score 0.90 (50 samples)  
+
+Interpretation:
+
+- The model is **reasonably balanced** across classes, with all F1-scores in the 0.78–0.90 range.  
+- `class_0` and `class_3` are the easiest classes (highest F1).  
+- `class_1` and `class_2` are slightly harder; they are more often confused with each other, which is visible in the confusion matrix.
+
+These numbers come from `artifacts/metrics/classification_report.txt` and `confusion_matrix.png`.
+
+---
+
+## 6. Ablation Studies and Failure Analysis (Summary)
+
+We also perform ablation experiments and qualitative error analysis (described in detail in the training notebook and main report):
+
+- **Ablations**
+  - With vs without data augmentation  
+  - Pretrained backbone vs training from scratch  
+  - Different learning rates  
+  Augmentation and pretraining consistently improve validation and test accuracy, while overly small or large learning rates hurt performance.
+
+- **Failure cases**
+  - We visualize a subset of misclassified test images in `artifacts/failures/misclassified_examples.png`.  
+  - Common failure modes include confusion between visually similar classes and images with cluttered backgrounds or atypical viewpoints.
+
+Together, the curves, confusion matrix, classification report, ablations, and failure cases provide a complete picture of how well the model works and where it still struggles.
