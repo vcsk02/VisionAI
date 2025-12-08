@@ -56,7 +56,11 @@ Based on the repository layout:
 
 ```text
 VisionAI/
+├── artifacts/            # Python code with visuals 
+├── docs/                 # Explanation of Crimp-DM
+├── notebook/             # Model training of VisionAI
 ├── public/               # Static assets (favicon, images, etc.)
+├── report/               # Repor of VisionAI
 ├── src/                  # Source code (components, hooks, utilities)
 ├── index.html            # HTML entry point
 ├── package.json          # Project metadata, dependencies & scripts
@@ -175,6 +179,14 @@ Please keep PRs focused and small where possible.
 ## Methodology
 
 We follow the CRISP-DM process for this project (see [docs/CRISP_DM.md](docs/CRISP_DM.md)).
+
+## Docs
+
+Included details on Crisp-DM, Evaluation, and Model I/O
+
+## Notebook
+
+ML / Data Science guts with Google Colab file
 
 ## Evaluation
 
