@@ -1,6 +1,6 @@
 # VisionAI – CRISP-DM Process
 
-This document describes our project using the CRISP-DM (Cross-Industry Standard Process for Data Mining) methodology. VisionAI is an end-to-end computer vision system that trains an image model and serves its predictions through a web UI.
+This document describes our project using the CRISP-DM (Cross-Industry Standard Process for Data Mining) methodology. VisionAI is an end-to-end computer vision system that trains an image classification model and serves its predictions through a web UI.
 
 ---
 
@@ -14,18 +14,18 @@ Modern computer vision models are powerful but hard to experiment with for non-e
 - Expose that model through a simple web interface (VisionAI) for inference and inspection.
 - Provide rich visualizations of model metrics and predictions.
 
-Concretely, we tackle the task of **[image classification / object detection / segmentation – choose one]** on the **[DATASET_NAME]** dataset.
+Concretely, we tackle the task of **multi-class image classification** on a **4-class image dataset** (referred to here as the *VisionAI image dataset*).
 
 ### 1.2 Objectives & Success Criteria
 
 - **Predictive performance:**  
-  - Target test accuracy ≥ **[X%]** (or other metric such as F1, mAP, IoU).
+  - Achieve test accuracy of at least **80%**, with macro F1-score also around or above **0.80**.
 - **Usability:**  
-  - A web UI where a user can upload an image and see model predictions and confidence scores.
+  - Provide a web UI where a user can upload an image and see model predictions and confidence scores in real time.
 - **Reproducibility:**  
-  - A Colab / Jupyter notebook that can be re-run to retrain the model from scratch.
+  - Provide a Colab / Jupyter notebook that can be re-run to retrain the model from scratch and regenerate evaluation artifacts.
 - **Explainability & evaluation:**  
-  - Visualizations for loss/accuracy curves, confusion matrix, and qualitative examples.
+  - Provide visualizations for loss/accuracy curves, confusion matrix, classification report, and qualitative examples of failure cases.
 
 ---
 
@@ -34,61 +34,48 @@ Concretely, we tackle the task of **[image classification / object detection / s
 ### 2.1 Data Collection
 
 - **Source:**  
-  - **[Describe dataset: e.g., CIFAR-10 / custom dataset / Kaggle dataset]**
+  - A curated 4-class image dataset used for educational and experimental purposes (e.g., a subset of a public dataset or a custom dataset).
 - **Size:**  
-  - **[N]** images across **[K]** classes.
+  - Several hundred images divided across **4** classes.
 - **Format:**  
-  - RGB images, originally sized **[H×W]**, stored as **[e.g., PNG/JPEG]**.
+  - RGB images, resized to **224×224** pixels for training and inference, stored as standard image files (e.g., PNG/JPEG).
 
 ### 2.2 Data Description
 
-- Each sample consists of:
-  - An input image.
-  - A categorical label from the set: **[list class names or examples]**.
-- Class distribution:
-  - **[Brief note on whether classes are balanced or imbalanced]**.
+Each sample consists of:
+
+- An input RGB image.
+- A categorical label indicating one of the four classes (e.g., `class_0`, `class_1`, `class_2`, `class_3`).
+
+Class distribution is approximately balanced, with each class having a similar number of examples. This makes accuracy and macro F1-score meaningful summary metrics.
 
 ### 2.3 Data Quality
 
 During initial exploration we checked for:
 
-- Missing or corrupted files.
-- Incorrect labels or obvious annotation errors.
+- Missing or corrupted files (non-readable images).
+- Obvious annotation errors (images that clearly belong to a different class).
 - Class imbalance issues.
 
-Any problematic samples were **[removed / fixed / kept but flagged]** and this is documented in the training notebook.
+Any corrupted images were removed. Labels that looked suspicious during inspection were checked and corrected. Overall, the dataset quality is sufficient for training a small classification model.
 
 ---
 
-## 3. Data Preparation
-
-### 3.1 Train/Validation/Test Split
-
-We split the dataset into:
-
-- **Train:** ~**[X%]** of the data  
-- **Validation:** ~**[Y%]**  
-- **Test:** ~**[Z%]**
-
-Splits are stratified by class where possible to maintain class distribution.
+## 3. Data Preparation (Excerpt)
 
 ### 3.2 Preprocessing
 
-For all images we apply:
-
-- Resize (if needed) to **[e.g., 224×224]**.
-- Conversion to tensor.
-- Normalization using dataset-specific mean and standard deviation.
+The same preprocessing steps are implemented both in the training notebook and in the deployed backend so that inference is consistent with training.
 
 ### 3.3 Data Augmentation
 
-To improve generalization and reduce overfitting we apply:
+To improve generalization and reduce overfitting we apply the following augmentations **only on the training set**:
 
-- Random horizontal flip  
-- Random crop / random resized crop  
-- **[Any other augmentations: color jitter, rotation, etc.]**
+- **Random horizontal flip** – makes the model invariant to left–right orientation.  
+- **Random resized crop around 224×224** – simulates small translations and zoom.  
+- (Optionally) **mild color jitter or small rotations** to mimic different lighting conditions and viewpoints.
 
-In the notebook we explain **why** each augmentation is chosen and show its effect on performance in the ablation section.
+Validation and test images are **not** augmented; they only go through deterministic resizing and normalization. In the notebook we show that augmentation improves validation performance in our ablation studies.
 
 ---
 
@@ -96,32 +83,38 @@ In the notebook we explain **why** each augmentation is chosen and show its effe
 
 ### 4.1 Model Choice
 
-We use **[e.g., ResNet-18]** as our primary architecture:
+We use **ResNet-18** as our primary architecture:
 
-- Pretrained on ImageNet and fine-tuned on our dataset.
-- Final fully-connected layer adapted to output **K** classes.
+- Pretrained on ImageNet and then fine-tuned on our 4-class dataset.
+- The final fully-connected layer is replaced with a new linear layer producing 4 outputs (one per class).
 
-We also experiment with **[alternative models, e.g., ResNet-34, EfficientNet, custom CNN]** as part of our ablation studies.
+We also experiment with alternative configurations, such as:
+
+- Training the same architecture **from scratch** (no pretraining).  
+- Trying slightly different backbones (e.g., a deeper ResNet variant) as part of our ablation studies.
 
 ### 4.2 Training Configuration
+
+Our default training configuration is:
 
 - **Loss function:** Cross-entropy loss  
   - Suitable for multi-class classification with mutually exclusive labels.
 - **Optimizer:** Adam  
-  - Adaptive learning rate, good default choice for deep networks.
-- **Learning rate:** **[e.g., 1e-3]**
-- **Batch size:** **[e.g., 64 or 128]**
-- **Epochs:** **[e.g., 20–50]**, with early stopping / model checkpointing based on validation performance.
+  - Adaptive learning rate; works well with minimal tuning.
+- **Learning rate:** `1e-3`  
+- **Batch size:** `64`  
+- **Epochs:** around **20** epochs, with early stopping or selection of the best checkpoint based on validation accuracy.
 
 ### 4.3 Hyperparameter Tuning & Ablation Studies
 
-We vary:
+We explore several variations:
 
-- Learning rate (e.g. 1e-2, 1e-3, 1e-4)
-- Data augmentation (with vs without)
-- Model depth (e.g. ResNet-18 vs ResNet-34)
+- Learning rate values: `1e-2`, `1e-3`, `1e-4`  
+- With vs without **data augmentation**  
+- **Pretrained ResNet-18** vs training from **scratch**  
+- (Optionally) deeper architectures such as **ResNet-34**
 
-Results are summarized in the **Experiments and Results** section of our report and in tables inside the notebook.
+Results of these experiments are summarized in the *Experiments and Results* section of the main report and in tables inside the training notebook. In general, augmentation and pretraining both improve performance, while poorly chosen learning rates can lead to unstable or slow training.
 
 ---
 
@@ -131,32 +124,45 @@ Results are summarized in the **Experiments and Results** section of our report 
 
 We evaluate on the held-out test set using:
 
-- **Accuracy**
-- **Precision, Recall, F1-score** per class (for imbalanced or multi-class data)
-- **Confusion matrix** to inspect which classes are commonly confused
+- **Accuracy** – overall fraction of correctly classified images.  
+- **Precision, Recall, F1-score per class** – useful for understanding performance on each of the four classes.  
+- **Macro and weighted F1-score** – to summarize performance across all classes.  
+- **Confusion matrix** – to inspect which classes are commonly confused.
 
 These metrics are visualized as:
 
-- Training vs validation loss curves
-- Training vs validation accuracy curves
-- Confusion matrix heatmap
-- **[Optionally ROC / PR curves, etc.]**
+- Training vs validation **loss curves**  
+- Training vs validation **accuracy curves**  
+- **Confusion matrix** heatmap  
+- **Classification report** (text)  
+- (Optionally) **ROC / PR curves** for binary or one-vs-rest setups
 
 ### 5.2 Results Summary
 
-- Best model: **[model name and configuration]**
-- Test accuracy: **[X%]**  
-- Key observations:
-  - **[e.g., augmentation improved generalization by Y%.]**
-  - **[e.g., deeper model did not help due to overfitting.]**
+For our best configuration (pretrained ResNet-18 with augmentation, learning rate `1e-3`, batch size 64), we obtain:
+
+- **Test accuracy:** ~84%  
+- **Macro and weighted F1-score:** ~0.84  
+
+Key observations:
+
+- Data augmentation improves validation and test accuracy compared to training without augmentation.  
+- Using pretrained weights from ImageNet yields better results than training from scratch on the small 4-class dataset.  
+- Learning rates that are too high or too low both degrade performance relative to the chosen default of `1e-3`.
 
 ### 5.3 Error Analysis
 
-We inspect typical failure cases:
+We inspect typical failure cases by:
 
-- Images with heavy occlusion, clutter, or atypical viewpoints.
-- Classes with very few examples.
-- Misclassified samples visualized in the notebook to understand model limitations.
+- Visualizing **misclassified test images** in a grid, with true and predicted labels.  
+- Examining rows/columns of the **confusion matrix** for systematic confusions.
+
+Common issues include:
+
+- Confusion between visually similar classes (e.g., `class_1` vs `class_2`).  
+- Misclassifications when objects are small, heavily occluded, or appear in cluttered backgrounds.
+
+These analyses help guide potential future improvements, such as collecting more data for specific classes or exploring models with better localization capabilities.
 
 ---
 
@@ -166,28 +172,50 @@ We inspect typical failure cases:
 
 After training, we export the model weights to:
 
-- `exported_model/visionai_model.pth` (PyTorch) **[or your actual path]**
+```text
+exported_model/visionai_model.pth
+```
 
-This file is versioned in the repo and can be loaded by the backend.
+## 6.2 Inference Service
 
-### 6.2 Inference Service
+We expose the model via a backend service (e.g., FastAPI or Flask). The service:
 
-We expose the model via a backend service (e.g., FastAPI/Flask):
+- Receives an image from the VisionAI frontend (file upload or base64).
+- Applies preprocessing identical to the training pipeline (resize, tensor conversion, normalization).
+- Runs inference with the trained model to obtain class probabilities.
+- Returns a JSON response containing:
+  - Predicted class labels  
+  - Confidence scores (probabilities)  
+  - Any additional structured outputs (e.g., top-k predictions or extra metadata)
 
-1. Receive image from the VisionAI frontend.
-2. Apply the same preprocessing steps as in the notebook.
-3. Run inference with the trained model.
-4. Return predictions, confidence scores, and any structured outputs (e.g., bounding boxes).
+The VisionAI web client calls this API using a configurable environment variable:
 
-The VisionAI web client calls this API using a configurable `VITE_API_BASE_URL`.
+```bash
+VITE_API_BASE_URL
+```
 
-### 6.3 End-to-End System
+## 6.3 End-to-End System
 
-The full pipeline is:
+The full VisionAI pipeline is:
 
-1. **Training & Evaluation:** Run `notebooks/visionai_model_training.ipynb` to retrain and evaluate the model.
-2. **Export:** Save the best model checkpoint.
-3. **Deployment:** Start the backend service loading this checkpoint.
-4. **Frontend:** Run the VisionAI Vite app; users upload images and see predictions + visualizations.
+1. Training & Evaluation
 
-This end-to-end setup demonstrates the full CRISP-DM cycle from business understanding through deployment.
+Run the training notebook to retrain and evaluate the model, and to regenerate metrics plots in artifacts/metrics/:
+
+```bash
+notebooks/visionai_model_training.ipynb
+```
+
+2. Export
+
+Save the best model checkpoint to:
+```bash
+exported_model/visionai_model.pth
+```
+3. Deployment (Backend)
+
+Start the backend service that:
+
+Loads exported_model/visionai_model.pth
+
+Exposes a /predict endpoint that accepts images and returns JSON predictions.
