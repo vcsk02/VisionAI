@@ -110,3 +110,21 @@ From the metrics and plots we conclude:
   - **[Examples: misclassification under heavy occlusion / tiny objects / similar-looking classes.]**
 
 These insights guide future improvements, such as collecting more data for difficult classes, trying more powerful architectures, or tuning augmentation strategies.
+
+## 6. Ablation Studies and Failure Analysis
+
+We ran a set of ablation experiments to understand the effect of key design choices:
+
+- **Data augmentation:** Removing augmentation decreases validation accuracy and increases overfitting.
+- **Pretraining:** Training from ImageNet-pretrained weights performs significantly better than training from scratch on our dataset.
+- **Learning rate:** A learning rate of `1e-3` balances convergence speed and stability; much higher or lower values degraded performance.
+
+These results are summarized in Section 5.4 of the report and in the ablation table inside the training notebook.
+
+We also perform **failure analysis** by visualizing a subset of misclassified test images. These examples (stored in `artifacts/failures/misclassified_examples.png`) highlight common failure modes such as:
+
+- Confusion between visually similar classes.
+- Poor performance on small or heavily occluded objects.
+- Weaknesses on under-represented classes.
+
+Together, the ablation experiments and failure analysis provide a more complete picture of where the model succeeds and where it struggles, guiding future improvements.
