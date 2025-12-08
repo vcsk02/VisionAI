@@ -23,6 +23,8 @@ Presentation Slides: https://docs.google.com/presentation/d/1IYoV1sVOmkXa1VnpouB
 - [Development Notes](#development-notes)
 - [Contributing](#contributing)
 - [License](#license)
+- [Methodology](#methodology)
+- [Evaluation](#evaluation)
 
 ---
 
@@ -173,3 +175,8 @@ Please keep PRs focused and small where possible.
 ## Methodology
 
 We follow the CRISP-DM process for this project (see [docs/CRISP_DM.md](docs/CRISP_DM.md)).
+
+## Evaluation
+
+Model metrics and plots are stored in `artifacts/metrics/`.  
+For details on how we split the data, which metrics we use, and how to interpret the plots, see [docs/evaluation.md](docs/evaluation.md).
