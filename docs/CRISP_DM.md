@@ -205,17 +205,3 @@ Run the training notebook to retrain and evaluate the model, and to regenerate m
 ```bash
 notebooks/visionai_model_training.ipynb
 ```
-
-2. Export
-
-Save the best model checkpoint to:
-```bash
-exported_model/visionai_model.pth
-```
-3. Deployment (Backend)
-
-Start the backend service that:
-
-Loads exported_model/visionai_model.pth
-
-Exposes a /predict endpoint that accepts images and returns JSON predictions.
